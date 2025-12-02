@@ -1,0 +1,3 @@
+# Ignore JWT keys - they are generated at runtime
+jwt_key
+jwt_key.pub

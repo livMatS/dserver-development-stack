@@ -1,0 +1,247 @@
+volumes:
+  postgres_data: {}
+  mongo_data: {}
+  minio_data: {}
+  dserver_venv: {}
+
+networks:
+  dserver_net:
+
+services:
+  # ==========================================================================
+  # PostgreSQL - SQL database for dserver admin metadata
+  # ==========================================================================
+  postgres:
+    image: postgres:16-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: dserver
+      POSTGRES_PASSWORD: dserver_secret
+      POSTGRES_DB: dserver
+    ports:
+      - "5432:5432"
+    networks:
+      - dserver_net
+    healthcheck:
+      test: pg_isready -U dserver
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ==========================================================================
+  # MongoDB - Search and retrieval backend for dataset metadata
+  # ==========================================================================
+  mongo:
+    image: mongo:7
+    volumes:
+      - mongo_data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: dserver
+      MONGO_INITDB_ROOT_PASSWORD: dserver_secret
+    ports:
+      - "27017:27017"
+    networks:
+      - dserver_net
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ==========================================================================
+  # MinIO - S3-compatible object storage
+  # ==========================================================================
+  minio:
+    image: minio/minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    networks:
+      dserver_net:
+        aliases:
+          # Add to /etc/hosts: 127.0.0.1 dserver-minio-alias
+          # for local access to datasets via the same URL
+          - dserver-minio-alias
+    volumes:
+      - minio_data:/data
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+      # Allow CORS requests from the webapp
+      MINIO_API_CORS_ALLOW_ORIGIN: "*"
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: timeout 5s bash -c ':> /dev/tcp/127.0.0.1/9000' || exit 1
+      interval: 5s
+      retries: 3
+      start_period: 5s
+      timeout: 5s
+
+  # ==========================================================================
+  # MinIO bucket initialization
+  # ==========================================================================
+  minio-init:
+    image: minio/mc
+    depends_on:
+      minio:
+        condition: service_healthy
+    networks:
+      - dserver_net
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc alias set minio http://minio:9000 minioadmin minioadmin;
+      /usr/bin/mc mb --ignore-existing minio/dtool-bucket;
+      /usr/bin/mc anonymous set public minio/dtool-bucket;
+      exit 0;
+      "
+
+  # ==========================================================================
+  # dserver - Virtual environment builder
+  # ==========================================================================
+  dserver-build-venv:
+    build:
+      context: .
+      dockerfile: ./compose/dserver/Dockerfile
+    image: dserver_image
+    volumes:
+      - .:/app
+      - dserver_venv:/venv
+    entrypoint: /bin/bash
+    command: /scripts/make-venv.sh
+    networks:
+      - dserver_net
+
+  # ==========================================================================
+  # dserver - Flask REST API for dataset metadata
+  # ==========================================================================
+  dserver:
+    image: dserver_image
+    depends_on:
+      dserver-build-venv:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    volumes:
+      - .:/app
+      - dserver_venv:/venv
+    environment:
+      # Flask configuration
+      FLASK_APP: dservercore
+      FLASK_DEBUG: "1"
+
+      # SQL database for admin metadata
+      SQLALCHEMY_DATABASE_URI: postgresql://dserver:dserver_secret@postgres:5432/dserver
+
+      # MongoDB for search plugin (dserver-search-plugin-mongo)
+      SEARCH_MONGO_URI: mongodb://dserver:dserver_secret@mongo:27017/?authSource=admin
+      SEARCH_MONGO_DB: dserver
+      SEARCH_MONGO_COLLECTION: datasets
+
+      # MongoDB for retrieve plugin (dserver-retrieve-plugin-mongo)
+      RETRIEVE_MONGO_URI: mongodb://dserver:dserver_secret@mongo:27017/?authSource=admin
+      RETRIEVE_MONGO_DB: dserver
+      RETRIEVE_MONGO_COLLECTION: datasets
+
+      # Enable dependency graph plugin
+      DSERVER_ENABLE_DEPENDENCY_VIEW: "True"
+
+      # JWT configuration (keys will be generated on first run)
+      JWT_PRIVATE_KEY_FILE: /app/compose/dserver/jwt/jwt_key
+      JWT_PUBLIC_KEY_FILE: /app/compose/dserver/jwt/jwt_key.pub
+      JWT_ALGORITHM: RS256
+
+      # CORS - allow requests from webapp
+      CORS_ALLOW_ORIGIN: "*"
+
+      # S3 configuration for dtool
+      DTOOL_S3_ENDPOINT_dtool-bucket: http://minio:9000
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin
+    ports:
+      - "5000:5000"
+    networks:
+      - dserver_net
+    command: /scripts/start-dserver.sh
+    healthcheck:
+      # /config/versions doesn't require authentication
+      test: curl -sf http://localhost:5000/config/versions || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  # ==========================================================================
+  # Token generator - Simple JWT token service for development
+  # ==========================================================================
+  token-generator:
+    image: dserver_image
+    depends_on:
+      dserver-build-venv:
+        condition: service_completed_successfully
+    volumes:
+      - .:/app
+      - dserver_venv:/venv
+    environment:
+      JWT_PRIVATE_KEY_FILE: /app/compose/dserver/jwt/jwt_key
+      JWT_PUBLIC_KEY_FILE: /app/compose/dserver/jwt/jwt_key.pub
+    ports:
+      - "5001:5001"
+    networks:
+      - dserver_net
+    command: /scripts/start-token-generator.sh
+
+  # ==========================================================================
+  # Webapp - Vue.js frontend (development server with hot-reload)
+  # ==========================================================================
+  webapp:
+    build:
+      context: .
+      dockerfile: ./compose/webapp/Dockerfile
+    depends_on:
+      dserver:
+        condition: service_healthy
+    volumes:
+      # Mount source for hot-reload in development
+      - ./dtool-lookup-webapp/dtool-lookup-webapp:/app
+      # Anonymous volume to preserve node_modules
+      - /app/node_modules
+    environment:
+      VUE_APP_DTOOL_LOOKUP_SERVER_URL: http://localhost:5000
+      VUE_APP_DTOOL_LOOKUP_SERVER_TOKEN_GENERATOR_URL: http://localhost:5001/token
+    ports:
+      - "8080:8080"
+    networks:
+      - dserver_net
+    command: npm run serve -- --host 0.0.0.0
+
+  # ==========================================================================
+  # Dataset indexer - Indexes datasets from S3 into dserver
+  # ==========================================================================
+  indexer:
+    image: dserver_image
+    depends_on:
+      dserver:
+        condition: service_healthy
+    volumes:
+      - .:/app
+      - dserver_venv:/venv
+    environment:
+      DSERVER_URL: http://dserver:5000
+      JWT_PRIVATE_KEY_FILE: /app/compose/dserver/jwt/jwt_key
+
+      # S3 configuration
+      DTOOL_S3_ENDPOINT_dtool-bucket: http://minio:9000
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin
+    networks:
+      - dserver_net
+    command: /scripts/index-datasets.sh
+    profiles:
+      - indexer  # Only run with: docker compose --profile indexer up indexer

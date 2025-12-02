@@ -1,0 +1,45 @@
+#!/bin/bash
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+if [ -f "/venv/VENV-READY" ]; then
+    echo "Virtual environment already exists"
+    exit 0
+fi
+
+echo "==> Creating Python virtual environment..."
+python -m venv /venv
+source /venv/bin/activate
+
+echo "==> Upgrading pip..."
+pip install --upgrade pip setuptools wheel
+
+echo "==> Installing dtoolcore..."
+pip install -e /app/dtoolcore
+
+echo "==> Installing dtool-s3..."
+pip install -e /app/dtool-s3
+
+echo "==> Installing dservercore..."
+pip install -e /app/dservercore
+
+echo "==> Installing dserver-search-plugin-mongo (from PyPI)..."
+pip install dserver-search-plugin-mongo
+
+echo "==> Installing dserver-retrieve-plugin-mongo..."
+pip install -e /app/dserver-retrieve-plugin-mongo
+
+echo "==> Installing dserver-dependency-graph-plugin..."
+pip install -e /app/dserver-dependency-graph-plugin
+
+echo "==> Installing additional dependencies..."
+pip install gunicorn psycopg2-binary PyJWT requests
+
+echo "==> Virtual environment setup complete!"
+pip list
+
+touch /venv/VENV-READY
+
+exit 0

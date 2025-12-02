@@ -19,3 +19,6 @@
 [submodule "dserver-retrieve-plugin-mongo"]
 	path = dserver-retrieve-plugin-mongo
 	url = git@github.com:jic-dtool/dserver-retrieve-plugin-mongo.git
+[submodule "dserver-search-plugin-mongo"]
+	path = dserver-search-plugin-mongo
+	url = git@github.com:jic-dtool/dserver-search-plugin-mongo.git
