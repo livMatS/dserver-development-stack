@@ -90,6 +90,79 @@ If you have datasets in the MinIO bucket, index them with:
 docker compose --profile indexer run --rm indexer /scripts/index-datasets.sh
 ```
 
+### Push datasets from the command line
+
+You can push datasets directly to the MinIO S3 storage from your host machine using the `dtool` command line tool.
+
+#### Prerequisites
+
+Install dtool with S3 support:
+
+```bash
+pip install dtool-s3
+```
+
+#### Configure dtool
+
+Copy the provided configuration file to your home directory:
+
+```bash
+cp dtool.json ~/.config/dtool/dtool.json
+```
+
+Or set the environment variables directly:
+
+```bash
+export DTOOL_S3_ENDPOINT_dtool-bucket="http://localhost:9000"
+export DTOOL_S3_ACCESS_KEY_ID_dtool-bucket="minioadmin"
+export DTOOL_S3_SECRET_ACCESS_KEY_dtool-bucket="minioadmin"
+export DTOOL_S3_DISABLE_BUCKET_VERSIONING_dtool-bucket=true
+```
+
+#### Create and push a dataset
+
+1. Create a proto dataset:
+
+```bash
+dtool create my-dataset
+```
+
+2. Add data to the dataset:
+
+```bash
+cp some-file.txt my-dataset/data/
+```
+
+3. Freeze the dataset:
+
+```bash
+dtool freeze my-dataset
+```
+
+4. Copy the dataset to the S3 storage:
+
+```bash
+dtool cp my-dataset s3://dtool-bucket/
+```
+
+5. Index the dataset in dserver (so it appears in the webapp):
+
+```bash
+docker compose --profile indexer run --rm indexer /scripts/index-datasets.sh
+```
+
+#### List datasets on S3
+
+```bash
+dtool ls s3://dtool-bucket/
+```
+
+#### Fetch a dataset from S3
+
+```bash
+dtool cp s3://dtool-bucket/<uuid> ./local-copy/
+```
+
 ### Get an authentication token
 
 For development, the token generator accepts any username/password:

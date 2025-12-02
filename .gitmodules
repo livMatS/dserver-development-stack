@@ -22,3 +22,6 @@
 [submodule "dserver-search-plugin-mongo"]
 	path = dserver-search-plugin-mongo
 	url = git@github.com:jic-dtool/dserver-search-plugin-mongo.git
+[submodule "dtool-cli"]
+	path = dtool-cli
+	url = git@github.com:jic-dtool/dtool-cli.git
