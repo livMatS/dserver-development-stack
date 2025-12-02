@@ -1,0 +1,21 @@
+[submodule "dtool"]
+	path = dtool
+	url = git@github.com:jic-dtool/dtool.git
+[submodule "dtoolcore"]
+	path = dtoolcore
+	url = git@github.com:jic-dtool/dtoolcore.git
+[submodule "dtool-s3"]
+	path = dtool-s3
+	url = git@github.com:jic-dtool/dtool-s3.git
+[submodule "dservercore"]
+	path = dservercore
+	url = git@github.com:jic-dtool/dservercore.git
+[submodule "dtool-lookup-webapp"]
+	path = dtool-lookup-webapp
+	url = git@github.com:livMatS/dtool-lookup-webapp.git
+[submodule "dserver-dependency-graph-plugin"]
+	path = dserver-dependency-graph-plugin
+	url = git@github.com:livMatS/dserver-dependency-graph-plugin.git
+[submodule "dserver-retrieve-plugin-mongo"]
+	path = dserver-retrieve-plugin-mongo
+	url = git@github.com:jic-dtool/dserver-retrieve-plugin-mongo.git
