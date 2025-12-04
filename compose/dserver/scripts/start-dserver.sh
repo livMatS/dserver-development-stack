@@ -34,8 +34,8 @@ echo "==> Registering S3 base URI..."
 flask base_uri add s3://dtool-bucket || echo "    Base URI may already exist"
 
 echo "==> Granting admin access to S3 bucket..."
-flask user search_permission add admin s3://dtool-bucket || echo "    Permission may already exist"
-flask user register_permission add admin s3://dtool-bucket || echo "    Permission may already exist"
+flask user search_permission admin s3://dtool-bucket || echo "    Permission may already exist"
+flask user register_permission admin s3://dtool-bucket || echo "    Permission may already exist"
 
 echo "==> Starting dserver with Flask development server..."
 echo "    Access the API at http://localhost:5000"

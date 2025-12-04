@@ -22,6 +22,10 @@ pip install -e /app/dtoolcore
 echo "==> Installing dtool-s3..."
 pip install -e /app/dtool-s3
 
+echo "==> Installing dtool-cli..."
+pip install -e /app/dtool-cli
+pip install dtool-info
+
 echo "==> Installing dservercore..."
 pip install -e /app/dservercore
 
