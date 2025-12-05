@@ -38,6 +38,9 @@ pip install -e /app/dserver-retrieve-plugin-mongo
 echo "==> Installing dserver-dependency-graph-plugin..."
 pip install -e /app/dserver-dependency-graph-plugin
 
+echo "==> Installing dserver-signed-url-plugin..."
+pip install -e /app/dserver-signed-url-plugin
+
 echo "==> Installing additional dependencies..."
 pip install gunicorn psycopg2-binary PyJWT requests
 

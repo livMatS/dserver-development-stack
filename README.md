@@ -163,6 +163,93 @@ dtool ls s3://dtool-bucket/
 dtool cp s3://dtool-bucket/<uuid> ./local-copy/
 ```
 
+### Access datasets via dserver (without backend credentials)
+
+The `dtool-dserver` storage broker allows you to access datasets through dserver without requiring direct S3/Azure credentials.
+
+#### Prerequisites
+
+Install dtool-dserver:
+
+```bash
+pip install dtool-dserver
+```
+
+#### Configure access
+
+You can configure dtool-dserver using either environment variables or the dtool.json config file:
+
+**Option 1: Using dtool.json (recommended)**
+
+Copy the provided configuration file to your dtool config directory and update the token:
+
+```bash
+cp dtool.json ~/.config/dtool/dtool.json
+```
+
+Then edit `~/.config/dtool/dtool.json` and replace `your-jwt-token-here` with an actual token:
+
+```bash
+# Get a JWT token from dserver
+TOKEN=$(curl -s -X POST http://localhost:5001/token \
+  -H "Content-Type: application/json" \
+  -d '{"username": "admin"}' | jq -r '.token')
+
+# Update the config file
+cat > ~/.config/dtool/dtool.json <<EOF
+{
+  "DTOOL_S3_ENDPOINT_dtool-bucket": "http://localhost:9000",
+  "DTOOL_S3_ACCESS_KEY_ID_dtool-bucket": "minioadmin",
+  "DTOOL_S3_SECRET_ACCESS_KEY_dtool-bucket": "minioadmin",
+  "DTOOL_S3_DISABLE_BUCKET_VERSIONING_dtool-bucket": true,
+  "DSERVER_DEFAULT_BASE_URI": "s3://dtool-bucket",
+  "DSERVER_TOKEN": "$TOKEN"
+}
+EOF
+```
+
+**Option 2: Using environment variables**
+
+```bash
+# Get a JWT token from dserver
+export DSERVER_TOKEN=$(curl -s -X POST http://localhost:5001/token \
+  -H "Content-Type: application/json" \
+  -d '{"username": "admin"}' | jq -r '.token')
+
+# Configure default base URI for short URIs (optional)
+export DSERVER_DEFAULT_BASE_URI="s3://dtool-bucket"
+```
+
+#### Using dserver:// URIs
+
+Three URI formats are supported:
+
+**Short format (when `DSERVER_DEFAULT_BASE_URI` is set):**
+```bash
+dtool ls dserver://localhost:5000/
+dtool cp dserver://localhost:5000/<uuid> ./local-copy/
+dtool cp my-dataset dserver://localhost:5000/
+```
+
+**Alias format (for multiple data sources):**
+```bash
+export DSERVER_BASE_URI_ALIASES='{"main": "s3://dtool-bucket", "archive": "s3://archive-bucket"}'
+dtool ls dserver://localhost:5000/main/
+dtool cp dserver://localhost:5000/main/<uuid> ./local-copy/
+```
+
+**Full format (always works, no configuration needed):**
+```bash
+dtool ls dserver://localhost:5000/s3/dtool-bucket/
+dtool cp dserver://localhost:5000/s3/dtool-bucket/<uuid> ./local-copy/
+dtool cp my-dataset dserver://localhost:5000/s3/dtool-bucket/
+```
+
+**Benefits:**
+- No need for S3/Azure credentials on client machines
+- Centralized access control through dserver
+- Automatic dataset registration on upload
+
 ### Get an authentication token
 
 For development, the token generator accepts any username/password:

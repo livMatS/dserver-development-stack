@@ -25,3 +25,18 @@
 [submodule "dtool-cli"]
 	path = dtool-cli
 	url = git@github.com:jic-dtool/dtool-cli.git
+[submodule "dtool-http"]
+	path = dtool-http
+	url = git@github.com:jic-dtool/dtool-http.git
+[submodule "dtool-azure"]
+	path = dtool-azure
+	url = git@github.com:jic-dtool/dtool-azure.git
+[submodule "dserver-notification-plugin"]
+	path = dserver-notification-plugin
+	url = git@github.com:livMatS/dserver-notification-plugin.git
+[submodule "dtool-dserver"]
+	path = dtool-dserver
+	url = git@github.com:livMatS/dtool-dserver.git
+[submodule "dserver-signed-url-plugin"]
+	path = dserver-signed-url-plugin
+	url = git@github.com:livMatS/dserver-signed-url-plugin.git
