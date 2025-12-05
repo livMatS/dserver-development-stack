@@ -40,3 +40,6 @@
 [submodule "dserver-signed-url-plugin"]
 	path = dserver-signed-url-plugin
 	url = git@github.com:livMatS/dserver-signed-url-plugin.git
+[submodule "dserver-client-js"]
+	path = dserver-client-js
+	url = git@github.com:livMatS/dserver-client-js.git
