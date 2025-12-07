@@ -58,8 +58,7 @@ All services should show as "healthy" or "running".
 
 | Service | Port | Description |
 |---------|------|-------------|
-| **dserver** | 5000 | REST API for dataset metadata |
-| **token-generator** | 5001 | Development JWT token service |
+| **dserver** | 5000 | REST API for dataset metadata (includes token generator) |
 | **webapp** | 8080 | Vue.js frontend |
 | **minio** | 9000 (API), 9001 (Console) | S3-compatible storage |
 | **postgres** | 5432 | PostgreSQL database |
@@ -190,8 +189,8 @@ cp dtool.json ~/.config/dtool/dtool.json
 Then edit `~/.config/dtool/dtool.json` and replace `your-jwt-token-here` with an actual token:
 
 ```bash
-# Get a JWT token from dserver
-TOKEN=$(curl -s -X POST http://localhost:5001/token \
+# Get a JWT token from dserver's token endpoint
+TOKEN=$(curl -s -X POST http://localhost:5000/auth/token \
   -H "Content-Type: application/json" \
   -d '{"username": "admin"}' | jq -r '.token')
 
@@ -211,8 +210,8 @@ EOF
 **Option 2: Using environment variables**
 
 ```bash
-# Get a JWT token from dserver
-export DSERVER_TOKEN=$(curl -s -X POST http://localhost:5001/token \
+# Get a JWT token from dserver's token endpoint
+export DSERVER_TOKEN=$(curl -s -X POST http://localhost:5000/auth/token \
   -H "Content-Type: application/json" \
   -d '{"username": "admin"}' | jq -r '.token')
 
@@ -252,20 +251,23 @@ dtool cp my-dataset dserver://localhost:5000/s3/dtool-bucket/
 
 ### Get an authentication token
 
-For development, the token generator accepts any username/password:
+The token generator is integrated into dserver as a plugin (`dserver-dummy-token-generator`).
+For development, it accepts any username/password combination:
 
 ```bash
-curl -X POST http://localhost:5001/token \
+curl -X POST http://localhost:5000/auth/token \
   -H "Content-Type: application/json" \
   -d '{"username": "admin", "password": "any"}'
 ```
 
 Use the returned token in the `Authorization: Bearer <token>` header.
 
+**Note:** The token endpoint is at `/auth/token` (the plugin mounts at `/token` and the token generation endpoint is `/token`).
+
 ### Access dserver API with authentication
 
 ```bash
-TOKEN=$(curl -s -X POST http://localhost:5001/token \
+TOKEN=$(curl -s -X POST http://localhost:5000/auth/token \
   -H "Content-Type: application/json" \
   -d '{"username": "admin"}' | jq -r '.token')
 
@@ -280,9 +282,13 @@ The following packages are installed in editable mode, so changes to the code ar
 
 - `dtoolcore` - Core dtool library
 - `dtool-s3` - S3 storage backend for dtool
+- `dtool-dserver` - dserver storage broker for accessing datasets via dserver
 - `dservercore` - dserver core application
+- `dserver-search-plugin-mongo` - MongoDB search plugin
 - `dserver-retrieve-plugin-mongo` - MongoDB retrieve plugin
 - `dserver-dependency-graph-plugin` - Dependency graph extension
+- `dserver-signed-url-plugin` - Signed URL generation for direct S3/Azure access
+- `dserver-dummy-token-generator` - Development-only JWT token generator
 
 ### Rebuilding the virtual environment
 
@@ -343,14 +349,21 @@ The stack creates a bucket named `dtool-bucket` on MinIO. To access datasets fro
 
 This repository includes the following submodules:
 
-| Submodule | Description |
-|-----------|-------------|
-| `dtoolcore` | Core Python API for managing datasets |
-| `dtool-s3` | S3 storage backend for dtool |
-| `dservercore` | dserver Flask application |
-| `dserver-retrieve-plugin-mongo` | MongoDB retrieve plugin |
-| `dserver-dependency-graph-plugin` | Dependency graph extension |
-| `dtool-lookup-webapp` | Vue.js web frontend |
+| Submodule                          | Description                                      |
+|------------------------------------|--------------------------------------------------|
+| `dtoolcore`                        | Core Python API for managing datasets            |
+| `dtool-s3`                         | S3 storage backend for dtool                     |
+| `dtool-azure`                      | Azure storage backend for dtool                  |
+| `dtool-cli`                        | Command-line interface for dtool                 |
+| `dtool-dserver`                    | Storage broker for accessing datasets via dserver|
+| `dservercore`                      | dserver Flask application                        |
+| `dserver-search-plugin-mongo`      | MongoDB search plugin                            |
+| `dserver-retrieve-plugin-mongo`    | MongoDB retrieve plugin                          |
+| `dserver-dependency-graph-plugin`  | Dependency graph extension                       |
+| `dserver-signed-url-plugin`        | Signed URL generation plugin                     |
+| `dserver-dummy-token-generator`    | Development-only JWT token generator plugin      |
+| `dtool-lookup-webapp`              | Vue.js web frontend                              |
+| `dserver-client-js`                | JavaScript/TypeScript client library             |
 
 ## Troubleshooting
 

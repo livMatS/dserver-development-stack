@@ -190,32 +190,11 @@ services:
       - dserver_net
     command: /scripts/start-dserver.sh
     healthcheck:
-      # /config/versions doesn't require authentication
-      test: curl -sf http://localhost:5000/config/versions || exit 1
+      test: curl -sf http://localhost:5000/config/health || exit 1
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 60s
-
-  # ==========================================================================
-  # Token generator - Simple JWT token service for development
-  # ==========================================================================
-  token-generator:
-    image: dserver_image
-    depends_on:
-      dserver-build-venv:
-        condition: service_completed_successfully
-    volumes:
-      - .:/app
-      - dserver_venv:/venv
-    environment:
-      JWT_PRIVATE_KEY_FILE: /app/compose/dserver/jwt/jwt_key
-      JWT_PUBLIC_KEY_FILE: /app/compose/dserver/jwt/jwt_key.pub
-    ports:
-      - "5001:5001"
-    networks:
-      - dserver_net
-    command: /scripts/start-token-generator.sh
 
   # ==========================================================================
   # Webapp - Vue.js frontend (development server with hot-reload)
@@ -229,12 +208,13 @@ services:
         condition: service_healthy
     volumes:
       # Mount source for hot-reload in development
-      - ./dtool-lookup-webapp/dtool-lookup-webapp:/app
-      # Anonymous volume to preserve node_modules
-      - /app/node_modules
+      - ./dtool-lookup-webapp/dtool-lookup-webapp/src:/app/src
+      - ./dtool-lookup-webapp/dtool-lookup-webapp/public:/app/public
+      # Mount dserver-client-js for development
+      - ./dserver-client-js:/dserver-client-js
     environment:
       VUE_APP_DTOOL_LOOKUP_SERVER_URL: http://localhost:5000
-      VUE_APP_DTOOL_LOOKUP_SERVER_TOKEN_GENERATOR_URL: http://localhost:5001/token
+      VUE_APP_DTOOL_LOOKUP_SERVER_TOKEN_GENERATOR_URL: http://localhost:5000/auth/token
     ports:
       - "8080:8080"
     networks:

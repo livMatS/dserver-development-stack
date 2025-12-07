@@ -43,3 +43,6 @@
 [submodule "dserver-client-js"]
 	path = dserver-client-js
 	url = git@github.com:livMatS/dserver-client-js.git
+[submodule "dserver-dummy-token-generator"]
+	path = dserver-dummy-token-generator
+	url = git@github.com:pastewka/dserver-dummy-token-generator.git

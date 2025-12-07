@@ -2,17 +2,31 @@
 # Node.js based container for Vue.js development server
 FROM node:20-alpine
 
-# Set working directory
+# Copy and build dserver-client-js first
+WORKDIR /dserver-client-js
+COPY ./dserver-client-js/package*.json ./
+RUN npm install
+COPY ./dserver-client-js/ ./
+RUN npm run build
+
+# Set working directory for webapp
 WORKDIR /app
 
-# Copy package files first for better caching
-COPY ./dtool-lookup-webapp/dtool-lookup-webapp/package*.json ./
+# Copy only package.json and fix the local dependency path
+COPY ./dtool-lookup-webapp/dtool-lookup-webapp/package.json ./
+RUN sed -i 's|file:../../dserver-client-js|file:/dserver-client-js|g' package.json
 
-# Install dependencies (use legacy-peer-deps to resolve version conflicts)
-RUN npm install --legacy-peer-deps
+# Install dependencies (generates fresh lockfile)
+RUN npm install
 
-# Copy the rest of the application
-COPY ./dtool-lookup-webapp/dtool-lookup-webapp/ ./
+# Copy source files only (exclude node_modules, package-lock.json which would override)
+COPY ./dtool-lookup-webapp/dtool-lookup-webapp/src ./src
+COPY ./dtool-lookup-webapp/dtool-lookup-webapp/public ./public
+COPY ./dtool-lookup-webapp/dtool-lookup-webapp/tsconfig*.json ./
+COPY ./dtool-lookup-webapp/dtool-lookup-webapp/babel.config.js ./
+COPY ./dtool-lookup-webapp/dtool-lookup-webapp/vue.config.js ./
+COPY ./dtool-lookup-webapp/dtool-lookup-webapp/.eslintrc.js ./
+COPY ./dtool-lookup-webapp/dtool-lookup-webapp/.browserslistrc ./
 
 # Create .env file for Vue CLI
 # Environment variables starting with VUE_APP_ are passed at runtime

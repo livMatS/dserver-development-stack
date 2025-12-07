@@ -41,4 +41,4 @@ echo "==> Starting dserver with Flask development server..."
 echo "    Access the API at http://localhost:5000"
 echo "    OpenAPI docs at http://localhost:5000/doc/swagger"
 
-exec flask run --host 0.0.0.0 --port 5000
+exec flask run --host 0.0.0.0 --port 5000 --debug

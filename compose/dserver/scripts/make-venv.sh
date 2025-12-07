@@ -41,6 +41,9 @@ pip install -e /app/dserver-dependency-graph-plugin
 echo "==> Installing dserver-signed-url-plugin..."
 pip install -e /app/dserver-signed-url-plugin
 
+echo "==> Installing dserver-dummy-token-generator..."
+pip install -e /app/dserver-dummy-token-generator
+
 echo "==> Installing additional dependencies..."
 pip install gunicorn psycopg2-binary PyJWT requests
 
