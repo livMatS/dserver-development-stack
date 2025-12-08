@@ -41,7 +41,7 @@ DATASET_URI=$(dtool cp . s3://dtool-bucket)
 echo "==> Test dataset created!"
 echo "    URI: $DATASET_URI"
 
-echo "==> Running indexer to register the dataset..."
-/scripts/index-datasets.sh
+echo "==> Indexing dataset in dserver..."
+flask base_uri index s3://dtool-bucket
 
 echo "==> Done! The test dataset should now be visible in dserver."

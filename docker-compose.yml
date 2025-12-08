@@ -266,9 +266,9 @@ services:
     command: npm run serve -- --host 0.0.0.0
 
   # ==========================================================================
-  # Dataset indexer - Indexes datasets from S3 into dserver
+  # Dataset indexer - Indexes datasets from S3 into dserver (using flask CLI)
   # ==========================================================================
-  indexer:
+  index-s3:
     image: dserver_image
     depends_on:
       dserver:
@@ -277,19 +277,42 @@ services:
       - .:/app
       - dserver_venv:/venv
     environment:
-      DSERVER_URL: http://dserver:5000
-      JWT_PRIVATE_KEY_FILE: /app/compose/dserver/jwt/jwt_key
+      # Flask configuration
+      FLASK_APP: dservercore
 
-      # S3 configuration
+      # SQL database for admin metadata
+      SQLALCHEMY_DATABASE_URI: postgresql://dserver:dserver_secret@postgres:5432/dserver
+
+      # MongoDB for search plugin
+      SEARCH_MONGO_URI: mongodb://dserver:dserver_secret@mongo:27017/?authSource=admin
+      SEARCH_MONGO_DB: dserver
+      SEARCH_MONGO_COLLECTION: datasets
+
+      # MongoDB for retrieve plugin
+      RETRIEVE_MONGO_URI: mongodb://dserver:dserver_secret@mongo:27017/?authSource=admin
+      RETRIEVE_MONGO_DB: dserver
+      RETRIEVE_MONGO_COLLECTION: datasets
+
+      # MongoDB for dependency graph plugin
+      MONGO_URI: mongodb://dserver:dserver_secret@mongo:27017/?authSource=admin
+      MONGO_DB: dserver
+      MONGO_COLLECTION: datasets
+
+      # S3 configuration for dtool
       DTOOL_S3_ENDPOINT_dtool-bucket: http://minio:9000
       AWS_ACCESS_KEY_ID: minioadmin
       AWS_SECRET_ACCESS_KEY: minioadmin
-
-      # dtool-dserver URI configuration (for using dserver:// URIs)
-      DSERVER_DEFAULT_BASE_URI: "s3://dtool-bucket"
-      DSERVER_PROTOCOL: http
+      DTOOL_S3_ACCESS_KEY_ID_dtool-bucket: minioadmin
+      DTOOL_S3_SECRET_ACCESS_KEY_dtool-bucket: minioadmin
     networks:
       - dserver_net
-    command: /scripts/index-datasets.sh
+    entrypoint: /bin/bash
+    command: >
+      -c "
+      source /venv/bin/activate &&
+      echo '==> Indexing all datasets in s3://dtool-bucket...' &&
+      flask base_uri index s3://dtool-bucket &&
+      echo '==> Indexing complete!'
+      "
     profiles:
-      - indexer  # Only run with: docker compose --profile indexer up indexer
+      - index  # Run with: docker compose --profile index up index-s3
