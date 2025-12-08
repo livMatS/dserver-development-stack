@@ -22,15 +22,6 @@
 [submodule "dserver-search-plugin-mongo"]
 	path = dserver-search-plugin-mongo
 	url = git@github.com:jic-dtool/dserver-search-plugin-mongo.git
-[submodule "dtool-cli"]
-	path = dtool-cli
-	url = git@github.com:jic-dtool/dtool-cli.git
-[submodule "dtool-http"]
-	path = dtool-http
-	url = git@github.com:jic-dtool/dtool-http.git
-[submodule "dtool-azure"]
-	path = dtool-azure
-	url = git@github.com:jic-dtool/dtool-azure.git
 [submodule "dserver-notification-plugin"]
 	path = dserver-notification-plugin
 	url = git@github.com:livMatS/dserver-notification-plugin.git
