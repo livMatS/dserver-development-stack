@@ -44,7 +44,7 @@ echo "==> Installing dserver-token-generator-plugin-oauth2..."
 pip install -e /app/dserver-token-generator-plugin-oauth2
 
 echo "==> Installing additional dependencies..."
-pip install gunicorn psycopg2-binary PyJWT requests authlib httpx
+pip install gunicorn psycopg2-binary PyJWT requests authlib httpx python-dotenv
 
 echo "==> Virtual environment setup complete!"
 pip list
