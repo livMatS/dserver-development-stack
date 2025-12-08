@@ -22,9 +22,8 @@ pip install -e /app/dtoolcore
 echo "==> Installing dtool-s3..."
 pip install -e /app/dtool-s3
 
-echo "==> Installing dtool-cli..."
-pip install -e /app/dtool-cli
-pip install dtool-info
+echo "==> Installing dtool-cli and dtool-info (from PyPI)..."
+pip install dtool-cli dtool-info
 
 echo "==> Installing dservercore..."
 pip install -e /app/dservercore
@@ -41,11 +40,11 @@ pip install -e /app/dserver-dependency-graph-plugin
 echo "==> Installing dserver-signed-url-plugin..."
 pip install -e /app/dserver-signed-url-plugin
 
-echo "==> Installing dserver-dummy-token-generator..."
-pip install -e /app/dserver-dummy-token-generator
+echo "==> Installing dserver-token-generator-plugin-oauth2..."
+pip install -e /app/dserver-token-generator-plugin-oauth2
 
 echo "==> Installing additional dependencies..."
-pip install gunicorn psycopg2-binary PyJWT requests
+pip install gunicorn psycopg2-binary PyJWT requests authlib httpx
 
 echo "==> Virtual environment setup complete!"
 pip list
