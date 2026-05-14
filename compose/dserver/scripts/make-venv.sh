@@ -40,8 +40,8 @@ pip install -e /app/dserver-dependency-graph-plugin
 echo "==> Installing dserver-signed-url-plugin..."
 pip install -e /app/dserver-signed-url-plugin
 
-echo "==> Installing dserver-token-generator-plugin-oauth2..."
-pip install -e /app/dserver-token-generator-plugin-oauth2
+echo "==> Installing dserver-dummy-token-generator (dev only, accepts any username)..."
+pip install -e /app/dserver-dummy-token-generator
 
 echo "==> Installing additional dependencies..."
 pip install gunicorn psycopg2-binary PyJWT requests authlib httpx python-dotenv

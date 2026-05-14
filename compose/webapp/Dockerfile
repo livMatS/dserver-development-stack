@@ -17,14 +17,12 @@ COPY ./dtool-lookup-webapp/dtool-lookup-webapp/package.json ./
 RUN sed -i 's|file:../../dserver-client-js|file:/dserver-client-js|g' package.json
 
 # Install dependencies (generates fresh lockfile)
-RUN npm install
+RUN npm install --legacy-peer-deps
 
 # Copy source files only (exclude node_modules, package-lock.json which would override)
 COPY ./dtool-lookup-webapp/dtool-lookup-webapp/src ./src
 COPY ./dtool-lookup-webapp/dtool-lookup-webapp/public ./public
-COPY ./dtool-lookup-webapp/dtool-lookup-webapp/tsconfig*.json ./
 COPY ./dtool-lookup-webapp/dtool-lookup-webapp/babel.config.js ./
-COPY ./dtool-lookup-webapp/dtool-lookup-webapp/vue.config.js ./
 COPY ./dtool-lookup-webapp/dtool-lookup-webapp/.eslintrc.js ./
 COPY ./dtool-lookup-webapp/dtool-lookup-webapp/.browserslistrc ./
 

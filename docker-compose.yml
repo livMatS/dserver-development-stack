@@ -224,7 +224,7 @@ services:
       - dserver_net
     command: /scripts/start-dserver.sh
     healthcheck:
-      test: curl -sf http://localhost:5000/config/health || exit 1
+      test: curl -sf http://localhost:5000/config/info -o /dev/null -w "%{http_code}" | grep -qE "^(200|401)$" || exit 1
       interval: 10s
       timeout: 5s
       retries: 5
