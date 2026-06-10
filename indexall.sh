@@ -1,11 +1,18 @@
 #! /bin/bash
+# Index all datasets from the configured bucket into dserver.
+# Works from any directory: paths are anchored to this script's location.
 
-TOKEN=$(python << 'PYTHON_SCRIPT'
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+TOKEN=$(python << PYTHON_SCRIPT
 import os
 import jwt
 from datetime import datetime, timedelta, timezone
 
-private_key_file = os.environ.get('JWT_PRIVATE_KEY_FILE', 'compose/dserver/jwt/jwt_key')
+private_key_file = os.environ.get(
+    'JWT_PRIVATE_KEY_FILE', '${SCRIPT_DIR}/compose/dserver/jwt/jwt_key')
 with open(private_key_file, 'r') as f:
     private_key = f.read()
 
@@ -21,4 +28,4 @@ print(token)
 PYTHON_SCRIPT
 )
 
-python3 tools/indexall.py $TOKEN s3://dtool-bucket
+python3 "${SCRIPT_DIR}/tools/indexall.py" "$TOKEN" s3://dtool-bucket

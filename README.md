@@ -201,7 +201,6 @@ cat > ~/.config/dtool/dtool.json <<EOF
   "DTOOL_S3_ACCESS_KEY_ID_dtool-bucket": "minioadmin",
   "DTOOL_S3_SECRET_ACCESS_KEY_dtool-bucket": "minioadmin",
   "DTOOL_S3_DISABLE_BUCKET_VERSIONING_dtool-bucket": true,
-  "DSERVER_DEFAULT_BASE_URI": "s3://dtool-bucket",
   "DSERVER_TOKEN": "$TOKEN"
 }
 EOF
@@ -214,30 +213,14 @@ EOF
 export DSERVER_TOKEN=$(curl -s -X POST http://localhost:5000/auth/token \
   -H "Content-Type: application/json" \
   -d '{"username": "admin"}' | jq -r '.token')
-
-# Configure default base URI for short URIs (optional)
-export DSERVER_DEFAULT_BASE_URI="s3://dtool-bucket"
 ```
 
 #### Using dserver:// URIs
 
-Three URI formats are supported:
+URIs have the form `dserver://<server>/<backend>/<bucket>[/<uuid>]`, where
+`<backend>/<bucket>` maps to the storage backend base URI
+`<backend>://<bucket>` on the server:
 
-**Short format (when `DSERVER_DEFAULT_BASE_URI` is set):**
-```bash
-dtool ls dserver://localhost:5000/
-dtool cp dserver://localhost:5000/<uuid> ./local-copy/
-dtool cp my-dataset dserver://localhost:5000/
-```
-
-**Alias format (for multiple data sources):**
-```bash
-export DSERVER_BASE_URI_ALIASES='{"main": "s3://dtool-bucket", "archive": "s3://archive-bucket"}'
-dtool ls dserver://localhost:5000/main/
-dtool cp dserver://localhost:5000/main/<uuid> ./local-copy/
-```
-
-**Full format (always works, no configuration needed):**
 ```bash
 dtool ls dserver://localhost:5000/s3/dtool-bucket/
 dtool cp dserver://localhost:5000/s3/dtool-bucket/<uuid> ./local-copy/

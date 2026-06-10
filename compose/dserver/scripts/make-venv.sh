@@ -28,8 +28,8 @@ pip install dtool-cli dtool-info
 echo "==> Installing dservercore..."
 pip install -e /app/dservercore
 
-echo "==> Installing dserver-search-plugin-mongo (from PyPI)..."
-pip install dserver-search-plugin-mongo
+echo "==> Installing dserver-search-plugin-mongo (editable)..."
+pip install -e /app/dserver-search-plugin-mongo
 
 echo "==> Installing dserver-retrieve-plugin-mongo..."
 pip install -e /app/dserver-retrieve-plugin-mongo
