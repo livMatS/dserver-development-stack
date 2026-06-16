@@ -1,0 +1,133 @@
+# process-compose service definitions for the dserver development stack.
+# Launched via `devbox services up`. Each block below is one service process;
+# dependencies and health checks gate start-up order.
+version: "0.5"
+
+processes:
+  # ==========================================================================
+  # PostgreSQL - SQL database for dserver admin metadata
+  # ==========================================================================
+  postgres:
+    command: "bash $DEVBOX_PROJECT_ROOT/devbox/postgres.sh"
+    availability:
+      restart: on_failure
+    readiness_probe:
+      exec:
+        command: "pg_isready -h 127.0.0.1 -p 5432 -U dserver"
+      initial_delay_seconds: 2
+      period_seconds: 3
+      timeout_seconds: 5
+      failure_threshold: 20
+
+  postgres-init:
+    command: "bash $DEVBOX_PROJECT_ROOT/devbox/postgres-init.sh"
+    depends_on:
+      postgres:
+        condition: process_healthy
+    availability:
+      restart: "no"
+
+  # ==========================================================================
+  # MongoDB - Search and retrieval backend for dataset metadata
+  # ==========================================================================
+  mongo:
+    command: "bash $DEVBOX_PROJECT_ROOT/devbox/mongo.sh"
+    availability:
+      restart: on_failure
+    readiness_probe:
+      exec:
+        command: "mongosh --host 127.0.0.1 --port 27017 --quiet --eval 'db.runCommand({ping:1}).ok'"
+      initial_delay_seconds: 2
+      period_seconds: 3
+      timeout_seconds: 5
+      failure_threshold: 20
+
+  mongo-init:
+    command: "bash $DEVBOX_PROJECT_ROOT/devbox/mongo-init.sh"
+    depends_on:
+      mongo:
+        condition: process_healthy
+    availability:
+      restart: "no"
+
+  # ==========================================================================
+  # MinIO - S3-compatible object storage + bucket initialization
+  # ==========================================================================
+  minio:
+    command: "bash $DEVBOX_PROJECT_ROOT/devbox/minio.sh"
+    availability:
+      restart: on_failure
+    readiness_probe:
+      http_get:
+        host: 127.0.0.1
+        port: 9000
+        path: /minio/health/live
+      initial_delay_seconds: 2
+      period_seconds: 3
+      timeout_seconds: 5
+      failure_threshold: 20
+
+  minio-init:
+    command: "bash $DEVBOX_PROJECT_ROOT/devbox/minio-init.sh"
+    depends_on:
+      minio:
+        condition: process_healthy
+    availability:
+      restart: "no"
+
+  # ==========================================================================
+  # dserver - Flask REST API for dataset metadata
+  # ==========================================================================
+  dserver:
+    command: "bash $DEVBOX_PROJECT_ROOT/devbox/with-dtool-s3.sh bash $DEVBOX_PROJECT_ROOT/devbox/start-dserver.sh"
+    depends_on:
+      postgres-init:
+        condition: process_completed_successfully
+      mongo-init:
+        condition: process_completed_successfully
+      minio-init:
+        condition: process_completed_successfully
+    availability:
+      restart: on_failure
+    readiness_probe:
+      http_get:
+        host: 127.0.0.1
+        port: 5000
+        path: /config/health
+      initial_delay_seconds: 5
+      period_seconds: 5
+      timeout_seconds: 5
+      failure_threshold: 30
+
+  # ==========================================================================
+  # Webapp - Vue.js frontend (development server with hot-reload)
+  # ==========================================================================
+  webapp:
+    command: "bash $DEVBOX_PROJECT_ROOT/devbox/webapp.sh"
+    depends_on:
+      dserver:
+        condition: process_healthy
+    availability:
+      restart: on_failure
+    readiness_probe:
+      http_get:
+        host: 127.0.0.1
+        port: 8080
+        path: /
+      initial_delay_seconds: 10
+      period_seconds: 10
+      timeout_seconds: 5
+      failure_threshold: 30
+
+  # ==========================================================================
+  # Dataset indexer - on demand only (disabled by default).
+  # Start with: devbox services up index-s3   (or run `devbox run index`)
+  # ==========================================================================
+  index-s3:
+    command: "bash $DEVBOX_PROJECT_ROOT/devbox/with-dtool-s3.sh bash $DEVBOX_PROJECT_ROOT/devbox/index.sh"
+    disabled: true
+    depends_on:
+      dserver:
+        condition: process_healthy
+    availability:
+      restart: "no"

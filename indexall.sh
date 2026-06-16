@@ -12,7 +12,7 @@ import jwt
 from datetime import datetime, timedelta, timezone
 
 private_key_file = os.environ.get(
-    'JWT_PRIVATE_KEY_FILE', '${SCRIPT_DIR}/compose/dserver/jwt/jwt_key')
+    'JWT_PRIVATE_KEY_FILE', '${SCRIPT_DIR}/jwt/jwt_key')
 with open(private_key_file, 'r') as f:
     private_key = f.read()
 

@@ -1,0 +1,102 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.17.3/.schema/devbox.schema.json",
+  "packages": {
+    "python": "3.12",
+    "nodejs": "22",
+    "postgresql": {
+      "version": "16",
+      "comment": "disable_plugin avoids devbox's built-in 'postgresql' service, which would collide with our explicit 'postgres' service in process-compose.yaml.",
+      "disable_plugin": true
+    },
+    "mongodb-ce": "8.0.15",
+    "mongosh": "latest",
+    "minio": "latest",
+    "minio-client": "latest",
+    "openssl": "latest",
+    "gcc": "latest",
+    "gnumake": "latest",
+    "curl": "latest",
+    "jq": "latest",
+    "git": "latest"
+  },
+  "env": {
+    "FLASK_APP": "dservercore",
+    "FLASK_DEBUG": "1",
+
+    "SQLALCHEMY_DATABASE_URI": "postgresql://dserver:dserver_secret@127.0.0.1:5432/dserver",
+
+    "SEARCH_MONGO_URI": "mongodb://dserver:dserver_secret@127.0.0.1:27017/?authSource=admin",
+    "SEARCH_MONGO_DB": "dserver",
+    "SEARCH_MONGO_COLLECTION": "datasets",
+
+    "RETRIEVE_MONGO_URI": "mongodb://dserver:dserver_secret@127.0.0.1:27017/?authSource=admin",
+    "RETRIEVE_MONGO_DB": "dserver",
+    "RETRIEVE_MONGO_COLLECTION": "datasets",
+
+    "MONGO_URI": "mongodb://dserver:dserver_secret@127.0.0.1:27017/?authSource=admin",
+    "MONGO_DB": "dserver",
+    "MONGO_COLLECTION": "datasets",
+
+    "DSERVER_ENABLE_DEPENDENCY_VIEW": "True",
+    "DSERVER_DYNAMIC_DEPENDENCY_KEYS": "True",
+
+    "JWT_PRIVATE_KEY_FILE": "$DEVBOX_PROJECT_ROOT/jwt/jwt_key",
+    "JWT_PUBLIC_KEY_FILE": "$DEVBOX_PROJECT_ROOT/jwt/jwt_key.pub",
+    "JWT_ALGORITHM": "RS256",
+
+    "CORS_ALLOW_ORIGIN": "*",
+
+    "AWS_ACCESS_KEY_ID": "minioadmin",
+    "AWS_SECRET_ACCESS_KEY": "minioadmin",
+
+    "SIGNED_URL_READ_EXPIRY_SECONDS": "3600",
+    "SIGNED_URL_WRITE_EXPIRY_SECONDS": "14400",
+
+    "SECRET_KEY": "dev-secret-key-change-in-production",
+
+    "OAUTH2_PROVIDER_NAME": "orcid",
+    "OAUTH2_BASE_URL": "http://127.0.0.1:5000",
+    "OAUTH2_AUTHORIZATION_URL": "https://orcid.org/oauth/authorize",
+    "OAUTH2_TOKEN_URL": "https://orcid.org/oauth/token",
+    "OAUTH2_SCOPE": "/authenticate",
+    "OAUTH2_ATTRIBUTE_MAP": "orcid:user_id,name:display_name",
+    "OAUTH2_USERNAME_FIELD": "user_id",
+    "OAUTH2_FRONTEND_URL": "http://127.0.0.1:8080",
+    "OAUTH2_LOGIN_SUCCESS_REDIRECT": "http://127.0.0.1:8080",
+    "OAUTH2_LOGIN_ERROR_REDIRECT": "http://127.0.0.1:8080/login?error=auth_failed",
+
+    "MINIO_ROOT_USER": "minioadmin",
+    "MINIO_ROOT_PASSWORD": "minioadmin",
+    "MINIO_API_CORS_ALLOW_ORIGIN": "*",
+
+    "VUE_APP_DTOOL_LOOKUP_SERVER_URL": "http://127.0.0.1:5000",
+    "VUE_APP_DTOOL_LOOKUP_SERVER_TOKEN_GENERATOR_URL": "http://127.0.0.1:5000/auth/token",
+    "VUE_APP_OAUTH2_ENABLED": "true",
+    "VUE_APP_OAUTH2_PROVIDER_NAME": "ORCID",
+    "VUE_APP_SHOW_USERNAME_PASSWORD_FORM": "false"
+  },
+  "shell": {
+    "init_hook": [
+      "bash $DEVBOX_PROJECT_ROOT/devbox/setup.sh"
+    ],
+    "scripts": {
+      "index": [
+        "bash $DEVBOX_PROJECT_ROOT/devbox/with-dtool-s3.sh bash $DEVBOX_PROJECT_ROOT/devbox/index.sh"
+      ],
+      "create-test-dataset": [
+        "bash $DEVBOX_PROJECT_ROOT/devbox/with-dtool-s3.sh bash $DEVBOX_PROJECT_ROOT/devbox/create-test-dataset.sh"
+      ],
+      "rebuild-venv": [
+        "rm -rf $DEVBOX_PROJECT_ROOT/.venv",
+        "bash $DEVBOX_PROJECT_ROOT/devbox/setup-venv.sh"
+      ],
+      "psql": [
+        "psql -h 127.0.0.1 -p 5432 -U dserver dserver"
+      ],
+      "clean-data": [
+        "rm -rf $DEVBOX_PROJECT_ROOT/.devbox-data",
+        "echo 'Removed runtime data directories (.devbox-data).'"
+      ]
+    }
+  }
+}

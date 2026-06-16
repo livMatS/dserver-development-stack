@@ -1,6 +1,12 @@
 # Environment files with secrets
 .env
 
+# devbox
+.devbox/
+.venv/
+.devbox-data/
+process-compose-*.log
+
 # macOS
 .DS_Store
 

@@ -1,20 +1,23 @@
-#!/bin/bash
-
+#!/usr/bin/env bash
+# Create a sample dataset, push it to MinIO and index it in dserver.
+# Mirrors compose/dserver/scripts/create-test-dataset.sh.
 set -o errexit
 set -o pipefail
 set -o nounset
 
+ROOT="${DEVBOX_PROJECT_ROOT:?DEVBOX_PROJECT_ROOT not set}"
+
+# shellcheck disable=SC1091
+source "$ROOT/.venv/bin/activate"
+
 echo "==> Creating a test dataset in S3 bucket..."
 
-# Create a temporary directory for the dataset
 TEMP_DIR=$(mktemp -d)
-trap "rm -rf $TEMP_DIR" EXIT
-
+trap 'rm -rf "$TEMP_DIR"' EXIT
 cd "$TEMP_DIR"
 
 echo "==> Creating proto dataset..."
 dtool create test-dataset
-
 cd test-dataset
 
 echo "==> Adding some test files..."
@@ -42,6 +45,7 @@ echo "==> Test dataset created!"
 echo "    URI: $DATASET_URI"
 
 echo "==> Indexing dataset in dserver..."
+cd "$ROOT"
 flask base_uri index s3://dtool-bucket
 
 echo "==> Done! The test dataset should now be visible in dserver."

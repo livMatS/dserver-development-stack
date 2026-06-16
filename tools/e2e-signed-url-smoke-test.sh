@@ -1,7 +1,7 @@
 #!/bin/bash
 # End-to-end smoke test for the dserver signed-URL upload/download flow.
 #
-# Requires the docker compose stack to be running (docker compose up -d)
+# Requires the stack to be running (devbox services up)
 # and curl, jq, python3 on the host.
 #
 # Exercises:
@@ -48,7 +48,7 @@ import jwt
 from datetime import datetime, timedelta, timezone
 
 key_file = os.environ.get(
-    'JWT_PRIVATE_KEY_FILE', '${SCRIPT_DIR}/../compose/dserver/jwt/jwt_key')
+    'JWT_PRIVATE_KEY_FILE', '${SCRIPT_DIR}/../jwt/jwt_key')
 with open(key_file) as f:
     private_key = f.read()
 now = datetime.now(timezone.utc)
